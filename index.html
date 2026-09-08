@@ -3,66 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>俊輝電梯 — 出糧確認</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>俊輝電梯 — 施工進度日報</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;background:#0d0f12;color:#e8eaf0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px}
 .header{text-align:center;margin-bottom:24px;padding-top:12px}
 .company{font-size:17px;font-weight:700;color:#f0c000}
+.subtitle{font-size:12px;color:#555d6e;margin-top:3px}
 .card{background:#13161c;border:1px solid #1e2330;border-radius:14px;padding:20px;width:100%;max-width:480px;margin-bottom:14px}
 .badge{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:#0d0f12;border-radius:10px;border:1px solid #2a3045}
-.avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
-.pay-box{background:#0a1a0a;border:1px solid #22c55e33;border-radius:12px;padding:20px;margin-bottom:16px;text-align:center}
-.pay-label{font-size:12px;color:#555d6e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
-.pay-amount{font-size:40px;font-weight:800;color:#22c55e;margin-bottom:4px}
-.pay-period{font-size:13px;color:#9aa0b4}
-.breakdown{background:#0d0f12;border:1px solid #1e2330;border-radius:10px;padding:14px;margin-bottom:16px}
-.bk-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #1e2330}
-.bk-row:last-child{border-bottom:none}
-.bk-label{color:#555d6e}
-.bk-val{font-weight:600}
-.checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;cursor:pointer}
-.checkbox-row input{width:20px;height:20px;accent-color:#f0c000;flex-shrink:0;margin-top:2px;cursor:pointer}
-.checkbox-row span{font-size:13px;line-height:1.6;color:#9aa0b4}
-.sig-wrap{border:2px dashed #2a3045;border-radius:10px;margin-bottom:10px;background:#080a0d;overflow:hidden}
-.sig-wrap.has-sig{border-color:#f0c00066}
-.sig-wrap canvas{display:block;width:100%;touch-action:none}
-.sig-hint{font-size:11px;color:#3a4255;text-align:center;margin-bottom:12px}
+.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0}
 .lbl{display:block;font-size:11px;color:#9aa0b4;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600}
-.row{display:flex;gap:8px}
-.btn{flex:1;border-radius:8px;padding:12px;cursor:pointer;font-size:13px;font-weight:700;border:none}
-.btn-ghost{background:#1e2330;border:1px solid #2a3045;color:#9aa0b4}
-.btn-green{background:#22c55e;color:#0d0f12}
-.btn-green:disabled{opacity:0.4;cursor:not-allowed}
-.btn-pdf{width:100%;background:#1e2330;border:1px solid #f0c00044;color:#f0c000;border-radius:8px;padding:12px;cursor:pointer;font-size:14px;font-weight:700;margin-top:10px}
-.success{text-align:center;padding:24px 16px}
+.inp{width:100%;background:#0d0f12;border:1px solid #2a3045;border-radius:10px;color:#e8eaf0;font-size:15px;padding:12px 14px;outline:none;-webkit-appearance:none;margin-bottom:14px}
+.inp:focus{border-color:#f0c000}
+select.inp option{background:#13161c}
+textarea.inp{resize:none;height:100px;font-family:inherit}
+.pct-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.pct-row input[type=range]{flex:1;accent-color:#f0c000;height:6px}
+.pct-val{font-size:20px;font-weight:800;color:#f0c000;min-width:48px;text-align:right}
+.pct-bar{height:6px;background:#1e2330;border-radius:3px;margin-bottom:14px;overflow:hidden}
+.pct-fill{height:100%;background:linear-gradient(90deg,#60a5fa,#f0c000,#22c55e);transition:width .3s;border-radius:3px}
+.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.status-btn{padding:10px;border-radius:8px;border:2px solid #2a3045;background:transparent;color:#9aa0b4;font-size:12px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s}
+.status-btn.sel{border-color:#f0c000;background:#1a1500;color:#f0c000}
+.btn-submit{width:100%;background:#f0c000;color:#0d0f12;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px}
+.btn-submit:disabled{opacity:0.4;cursor:not-allowed}
+.success{text-align:center;padding:32px 16px}
 .sum{background:#0d0f12;border:1px solid #1e2330;border-radius:10px;padding:14px;margin:14px 0;text-align:left}
 .sum-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #1e2330}
 .sum-row:last-child{border-bottom:none}
-.loading{text-align:center;padding:40px 20px;color:#555d6e}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#e05c5c;color:#fff;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:999}
 .toast.show{opacity:1}
+.tag{display:inline-block;background:#1e2330;border:1px solid #2a3045;border-radius:20px;padding:3px 10px;font-size:11px;color:#9aa0b4;margin-right:6px;margin-bottom:6px;cursor:pointer;transition:all .15s}
+.tag.sel{background:#0a1525;border-color:#60a5fa;color:#60a5fa}
 </style>
 </head>
 <body>
 <div class="header">
-  <div style="font-size:32px;margin-bottom:6px">💰</div>
-  <div class="company">俊輝電梯工程有限公司</div>
-  <div style="font-size:12px;color:#555d6e;margin-top:3px">出糧確認簽署</div>
+  <div style="font-size:32px;margin-bottom:6px">&#x1F3D7;</div>
+  <div class="company">巨揚工程有限公司</div>
+  <div class="subtitle">施工進度日報</div>
 </div>
 
 <div id="errorScreen" style="display:none;text-align:center;padding:60px 20px">
   <div style="font-size:48px;margin-bottom:16px">⚠️</div>
   <div style="font-size:18px;font-weight:700;color:#e05c5c;margin-bottom:8px">連結無效</div>
-  <div style="color:#555d6e;font-size:14px">請向主管索取正確嘅確認連結</div>
-</div>
-
-<div id="loadingScreen" style="display:none">
-  <div class="card loading">
-    <div style="font-size:32px;margin-bottom:12px">⏳</div>
-    <div>載入薪酬資料中...</div>
-  </div>
+  <div style="color:#555d6e;font-size:14px">請向主管索取正確嘅連結</div>
 </div>
 
 <div id="mainContent" style="width:100%;max-width:480px;display:none">
@@ -70,72 +56,73 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
     <div class="badge">
       <div class="avatar" id="empAvatar">?</div>
       <div>
-        <div style="font-size:17px;font-weight:700" id="empName">載入中...</div>
-        <div style="font-size:11px;color:#555d6e;margin-top:2px" id="payPeriodBadge">電梯技工</div>
+        <div style="font-size:16px;font-weight:700" id="empName">載入中...</div>
+        <div style="font-size:11px;color:#555d6e;margin-top:2px" id="projName">施工負責人</div>
       </div>
     </div>
 
-    <!-- Pay amount -->
-    <div class="pay-box">
-      <div class="pay-label">本月實收金額</div>
-      <div class="pay-amount" id="payAmount">HK$0</div>
-      <div class="pay-period" id="payPeriod">—</div>
+    <!-- Date -->
+    <label class="lbl">📅 日期</label>
+    <input type="date" class="inp" id="dateInp">
+
+    <!-- Project -->
+    <label class="lbl">🏗 工程項目</label>
+    <select class="inp" id="projInp">
+      <option value="">— 選擇工程 —</option>
+      <option>EC-378 九龍東警察總部</option>
+      <option>EC-391 Pine Street/Oak Street</option>
+      <option>EC-399 銅鑼灣聖保祿醫院</option>
+      <option>EC-413 黃竹坑</option>
+      <option>EC-440 瓊林街</option>
+      <option>EC-450 高士美道</option>
+      <option>EC-456 將軍澳唐賢街</option>
+      <option>EC-459 瑪麗醫院</option>
+      <option>EC-468 荃灣柴灣角街天主教小學</option>
+      <option>EC-474 啟德SOGO A座</option>
+    </select>
+
+    <!-- Progress -->
+    <label class="lbl">📊 整體完成進度</label>
+    <div class="pct-row">
+      <input type="range" min="0" max="100" step="5" value="0" id="pctSlider" oninput="updPct()">
+      <div class="pct-val" id="pctVal">0%</div>
+    </div>
+    <div class="pct-bar"><div class="pct-fill" id="pctFill" style="width:0%"></div></div>
+
+    <!-- Status -->
+    <label class="lbl">🚦 今日狀態</label>
+    <div class="status-grid">
+      <button class="status-btn" data-s="正常施工" onclick="selStatus(this)">✅ 正常施工</button>
+      <button class="status-btn" data-s="延誤" onclick="selStatus(this)">⚠️ 延誤</button>
+      <button class="status-btn" data-s="待料" onclick="selStatus(this)">📦 待料</button>
+      <button class="status-btn" data-s="惡劣天氣停工" onclick="selStatus(this)">🌧 天氣停工</button>
+      <button class="status-btn" data-s="驗收檢查" onclick="selStatus(this)">🔍 驗收檢查</button>
+      <button class="status-btn" data-s="完工" onclick="selStatus(this)">🏁 完工</button>
     </div>
 
-    <!-- Breakdown -->
-    <div class="breakdown" id="breakdown">
-      <div class="bk-row"><span class="bk-label">基本薪酬</span><span class="bk-val" id="bkBase">—</span></div>
-      <div class="bk-row"><span class="bk-label">出勤天數</span><span class="bk-val" id="bkDays">—</span></div>
-      <div class="bk-row"><span class="bk-label">假日更</span><span class="bk-val" id="bkHoliday">—</span></div>
-      <div class="bk-row"><span class="bk-label">夜更津貼</span><span class="bk-val" id="bkNight">—</span></div>
-      <div class="bk-row" style="border-top:1px solid #f0c00033;margin-top:4px;padding-top:10px"><span style="color:#f0c000;font-weight:700">實收合計</span><span style="color:#22c55e;font-weight:800" id="bkTotal">—</span></div>
-    </div>
+    <!-- Today's work -->
+    <label class="lbl">📝 今日工作內容</label>
+    <textarea class="inp" id="workInp" placeholder="例：完成導軌安裝、進行曳引機測試..."></textarea>
 
-    <!-- Confirm checkbox -->
-    <label class="checkbox-row">
-      <input type="checkbox" id="agreeCheck" onchange="updateState()">
-      <span>本人確認已收取上述薪酬，金額正確無誤，並同意此電子簽署具有法律效力。</span>
-    </label>
+    <!-- Issues -->
+    <label class="lbl">⚠️ 問題／跟進事項（可選）</label>
+    <textarea class="inp" id="issueInp" placeholder="例：零件未到、需要主管決定..." style="height:70px"></textarea>
 
-    <!-- Dispute option -->
-    <label class="checkbox-row" style="margin-bottom:20px">
-      <input type="checkbox" id="disputeCheck" onchange="toggleDispute()">
-      <span style="color:#e05c5c">金額有異議（勾選後請填寫備註）</span>
-    </label>
-    <div id="disputeBox" style="display:none;margin-bottom:16px">
-      <label class="lbl">📝 異議說明</label>
-      <textarea style="width:100%;background:#0d0f12;border:1px solid #e05c5c55;border-radius:10px;color:#e8eaf0;font-size:14px;padding:12px;outline:none;resize:none;height:80px;font-family:inherit" id="disputeText" placeholder="請說明異議原因..."></textarea>
-    </div>
+    <!-- Tomorrow plan -->
+    <label class="lbl">📋 明日計劃（可選）</label>
+    <textarea class="inp" id="planInp" placeholder="例：安裝門刀、進行安全回路測試..." style="height:70px"></textarea>
 
-    <!-- Signature -->
-    <label class="lbl">✍️ 電子簽名確認</label>
-    <div class="sig-wrap" id="sigWrap">
-      <canvas id="sigCanvas" height="150"></canvas>
-    </div>
-    <div class="sig-hint">請用手指或滑鼠在上方簽名</div>
-
-    <div class="row">
-      <button class="btn btn-ghost" onclick="clearSig()">🗑 清除</button>
-      <button class="btn btn-green" id="submitBtn" onclick="doSubmit()" disabled>✅ 確認簽收</button>
-    </div>
+    <button class="btn-submit" id="submitBtn" onclick="doSubmit()">📤 提交日報</button>
   </div>
 </div>
 
 <div id="successScreen" style="display:none;width:100%;max-width:480px">
   <div class="card success">
     <div style="font-size:56px;margin-bottom:12px">✅</div>
-    <h2 style="font-size:20px;font-weight:800;color:#22c55e;margin-bottom:8px">簽收完成！</h2>
+    <h2 style="font-size:20px;font-weight:800;color:#22c55e;margin-bottom:8px">日報已提交！</h2>
     <div class="sum" id="sumBox"></div>
-    <p style="color:#9aa0b4;font-size:13px">薪酬簽收紀錄已儲存</p>
-    <button class="btn-pdf" onclick="downloadPDF()">📄 下載 PDF 簽收紀錄</button>
-  </div>
-</div>
-
-<div id="disputeSuccessScreen" style="display:none;width:100%;max-width:480px">
-  <div class="card success">
-    <div style="font-size:56px;margin-bottom:12px">📋</div>
-    <h2 style="font-size:20px;font-weight:800;color:#e05c5c;margin-bottom:8px">異議已提交</h2>
-    <p style="color:#9aa0b4;font-size:13px;line-height:1.7">你嘅異議已記錄，主管會盡快聯絡你核實。</p>
+    <p style="color:#9aa0b4;font-size:13px">主管已收到，如有問題會聯絡你</p>
+    <button onclick="resetForm()" style="width:100%;background:#1e2330;border:1px solid #2a3045;color:#9aa0b4;border-radius:8px;padding:11px;cursor:pointer;font-size:13px;font-weight:600;margin-top:12px">📝 再提交一份</button>
   </div>
 </div>
 
@@ -144,157 +131,93 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
 <script>
 const SB_URL='https://fyxvejnvzflxppqrhlzt.supabase.co',SB_KEY='sb_publishable_k9GEEEmqiYnuBPFqsQuvIQ_YGjweOSh';
 const EMPS=[
-  {id:26,name:'姚奇敏',color:'#FF6B1A',rate:1800},
-  {id:28,name:'賴偉志',color:'#22C55E',rate:1800},
-  {id:29,name:'韓小錦',color:'#60A5FA',rate:1800},
-  {id:30,name:'彭金花',color:'#A78BFA',rate:1800},
-  {id:31,name:'李文彪',color:'#FB923C',rate:1800},
-  {id:32,name:'莫家文',color:'#F43F5E',rate:1800},
-  {id:33,name:'陳文軒',color:'#06B6D4',rate:1800},
-  {id:43,name:'Simon 曾遠宗',color:'#84CC16',rate:2000},
-  {id:44,name:'Kim',color:'#E879F9',rate:1800},
-  {id:45,name:'耿華成',color:'#F0C000',rate:1800},
-  {id:46,name:'譚敏銳',color:'#22C55E',rate:1800},
-  {id:47,name:'吳紹鵬',color:'#60A5FA',rate:1800},
-  {id:48,name:'蔡貴明',color:'#A78BFA',rate:1800},
-  {id:51,name:'李國森',color:'#FB923C',rate:1800},
+  {id:26,name:'姚奇敏',color:'#FF6B1A'},{id:28,name:'賴偉志',color:'#22C55E'},
+  {id:29,name:'韓小錦',color:'#60A5FA'},{id:30,name:'彭金花',color:'#A78BFA'},
+  {id:31,name:'李文彪',color:'#FB923C'},{id:32,name:'莫家文',color:'#F43F5E'},
+  {id:33,name:'陳文軒',color:'#06B6D4'},{id:43,name:'Simon 曾遠宗',color:'#84CC16'},
+  {id:44,name:'Kim',color:'#E879F9'},{id:45,name:'耿華成',color:'#F0C000'},
+  {id:46,name:'譚敏銳',color:'#22C55E'},{id:47,name:'吳紹鵬',color:'#60A5FA'},
+  {id:48,name:'蔡貴明',color:'#A78BFA'},{id:51,name:'李國森',color:'#FB923C'},
 ];
-let emp=null,hasSig=false,sigURL=null,signedAt=null,payData=null;
-let canvas,ctx,drawing=false,lx,ly;
-
+let emp=null,status=null;
 const p=new URLSearchParams(location.search);
+// Support ?emp=ID or ?proj=PROJID for project-specific links
 emp=EMPS.find(e=>e.id===parseInt(p.get('emp')||'0'));
-const payMonth=p.get('month')||new Date().toISOString().slice(0,7);
+const preProj=p.get('proj')||'';
 
 if(!emp){document.getElementById('errorScreen').style.display='block';}
-else{loadPayData();}
-
-async function loadPayData(){
-  document.getElementById('loadingScreen').style.display='block';
-  const hk=new Date(Date.now()+8*3600000);
-  const [yr,mo]=payMonth.split('-');
-  const start=`${payMonth}-01`, end=`${payMonth}-31`;
-
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/attendance?employee_name=eq.${encodeURIComponent(emp.name)}&date=gte.${start}&date=lte.${end}&select=date,shift_type,clock_in,clock_out`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
-    const rows=await r.json();
-
-    let normalDays=0,holidayDays=0,nightShifts=0;
-    if(Array.isArray(rows)){
-      rows.forEach(row=>{
-        if(row.shift_type==='假日更')holidayDays++;
-        else if(row.shift_type==='夜更')nightShifts++;
-        else normalDays++;
-      });
-    }
-
-    const base=emp.rate;
-    const holidayPay=holidayDays*base*1.5;
-    const nightPay=nightShifts*150;
-    const totalDays=normalDays+holidayDays+nightShifts;
-    const dailyBase=totalDays*base;
-    const total=dailyBase+nightPay;
-
-    payData={base,normalDays,holidayDays,nightShifts,totalDays,holidayPay,nightPay,total,month:payMonth};
-
-    document.getElementById('loadingScreen').style.display='none';
-    document.getElementById('mainContent').style.display='block';
-    document.getElementById('empName').textContent=emp.name;
-    document.getElementById('payPeriodBadge').textContent=`電梯技工 | ${yr}年${parseInt(mo)}月薪酬`;
-    document.getElementById('payAmount').textContent=`HK$${total.toLocaleString()}`;
-    document.getElementById('payPeriod').textContent=`薪酬期：${yr}年${parseInt(mo)}月`;
-    document.getElementById('bkBase').textContent=`HK$${base.toLocaleString()}/日`;
-    document.getElementById('bkDays').textContent=`${totalDays} 天`;
-    document.getElementById('bkHoliday').textContent=holidayDays>0?`${holidayDays} 天 (+HK$${((base*0.5)*holidayDays).toLocaleString()})`:'—';
-    document.getElementById('bkNight').textContent=nightShifts>0?`${nightShifts} 更 (+HK$${nightPay.toLocaleString()})`:'—';
-    document.getElementById('bkTotal').textContent=`HK$${total.toLocaleString()}`;
-
-    const av=document.getElementById('empAvatar');
-    av.textContent=emp.name[0];av.style.background=emp.color+'33';av.style.color=emp.color;av.style.border='2px solid '+emp.color+'66';
-    initCanvas();
-  }catch(e){
-    document.getElementById('loadingScreen').style.display='none';
-    document.getElementById('errorScreen').style.display='block';
+else{
+  document.getElementById('mainContent').style.display='block';
+  document.getElementById('empName').textContent=emp.name;
+  const av=document.getElementById('empAvatar');
+  av.textContent=emp.name[0];av.style.background=emp.color+'33';av.style.color=emp.color;av.style.border='2px solid '+emp.color+'66';
+  // Pre-select project if in URL
+  if(preProj){
+    const sel=document.getElementById('projInp');
+    for(let o of sel.options){if(o.value.includes(preProj)||o.text.includes(preProj)){o.selected=true;document.getElementById('projName').textContent=o.text;break;}}
   }
+  // Default date
+  const hk=new Date(Date.now()+8*3600000);
+  document.getElementById('dateInp').value=hk.toISOString().slice(0,10);
 }
 
-function toggleDispute(){
-  const d=document.getElementById('disputeCheck').checked;
-  document.getElementById('disputeBox').style.display=d?'block':'none';
-  if(d){document.getElementById('agreeCheck').checked=false;}
-  updateState();
+function updPct(){
+  const v=document.getElementById('pctSlider').value;
+  document.getElementById('pctVal').textContent=v+'%';
+  document.getElementById('pctFill').style.width=v+'%';
 }
-function updateState(){
-  const agreed=document.getElementById('agreeCheck').checked;
-  document.getElementById('submitBtn').disabled=!(agreed&&hasSig);
+function selStatus(btn){
+  document.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');status=btn.dataset.s;
 }
-function initCanvas(){
-  canvas=document.getElementById('sigCanvas');ctx=canvas.getContext('2d');
-  canvas.width=(canvas.offsetWidth||440)*devicePixelRatio;canvas.height=150*devicePixelRatio;
-  ctx.scale(devicePixelRatio,devicePixelRatio);
-  ctx.strokeStyle='#22c55e';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
-  const pos=e=>{const r=canvas.getBoundingClientRect();const s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];};
-  canvas.addEventListener('mousedown',e=>{drawing=true;[lx,ly]=pos(e);});
-  canvas.addEventListener('mousemove',e=>{if(!drawing)return;const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();[lx,ly]=[x,y];});
-  canvas.addEventListener('mouseup',()=>{drawing=false;chkSig();});
-  canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;[lx,ly]=pos(e);},{passive:false});
-  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();[lx,ly]=[x,y];},{passive:false});
-  canvas.addEventListener('touchend',()=>{drawing=false;chkSig();});
-}
-function chkSig(){const d=ctx.getImageData(0,0,canvas.width,canvas.height).data;hasSig=d.some((v,i)=>i%4===3&&v>0);if(hasSig)document.getElementById('sigWrap').classList.add('has-sig');updateState();}
-function clearSig(){ctx.clearRect(0,0,canvas.width,canvas.height);hasSig=false;document.getElementById('sigWrap').classList.remove('has-sig');updateState();}
 
 async function doSubmit(){
+  const proj=document.getElementById('projInp').value;
+  const work=document.getElementById('workInp').value.trim();
+  if(!proj){toast('⚠️ 請選擇工程項目');return;}
+  if(!status){toast('⚠️ 請選擇今日狀態');return;}
+  if(!work){toast('⚠️ 請填寫今日工作內容');return;}
+
   const btn=document.getElementById('submitBtn');
-  btn.disabled=true;btn.textContent='儲存中...';
-  sigURL=canvas.toDataURL('image/png');signedAt=new Date().toISOString();
-  const isDispute=document.getElementById('disputeCheck').checked;
-  const disputeText=document.getElementById('disputeText').value.trim();
+  btn.disabled=true;btn.textContent='提交中...';
+
+  const payload={
+    employee_name:emp.name,
+    project_name:proj,
+    report_date:document.getElementById('dateInp').value,
+    progress_pct:parseInt(document.getElementById('pctSlider').value),
+    status,
+    work_done:work,
+    issues:document.getElementById('issueInp').value.trim()||null,
+    tomorrow_plan:document.getElementById('planInp').value.trim()||null,
+    submitted_at:new Date().toISOString()
+  };
 
   try{
-    await fetch(`${SB_URL}/rest/v1/payday_confirmations`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({employee_name:emp.name,pay_month:payData.month,amount:payData.total,days:payData.totalDays,confirmed:!isDispute,dispute_reason:disputeText||null,signature_data:sigURL,signed_at:signedAt})});
-
+    const r=await fetch(`${SB_URL}/rest/v1/progress_reports`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error();
     document.getElementById('mainContent').style.display='none';
-    if(isDispute){document.getElementById('disputeSuccessScreen').style.display='block';return;}
     document.getElementById('successScreen').style.display='block';
-    const [yr,mo]=payData.month.split('-');
+    const statusIcon={'正常施工':'✅','延誤':'⚠️','待料':'📦','惡劣天氣停工':'🌧','驗收檢查':'🔍','完工':'🏁'};
     document.getElementById('sumBox').innerHTML=`
-      <div class="sum-row"><span style="color:#555d6e">姓名</span><span style="font-weight:600">${emp.name}</span></div>
-      <div class="sum-row"><span style="color:#555d6e">薪酬月份</span><span style="font-weight:600">${yr}年${parseInt(mo)}月</span></div>
-      <div class="sum-row"><span style="color:#555d6e">實收金額</span><span style="font-weight:600;color:#22c55e">HK$${payData.total.toLocaleString()}</span></div>
-      <div class="sum-row"><span style="color:#555d6e">出勤天數</span><span style="font-weight:600">${payData.totalDays} 天</span></div>
-      <div class="sum-row"><span style="color:#555d6e">確認時間</span><span style="font-weight:600">${signedAt.slice(0,16).replace('T',' ')}</span></div>`;
-  }catch(e){btn.disabled=false;btn.textContent='✅ 確認簽收';toast('❌ 儲存失敗，請重試');}
+      <div class="sum-row"><span style="color:#555d6e">負責人</span><span style="font-weight:600">${emp.name}</span></div>
+      <div class="sum-row"><span style="color:#555d6e">工程</span><span style="font-weight:600">${proj}</span></div>
+      <div class="sum-row"><span style="color:#555d6e">日期</span><span style="font-weight:600">${payload.report_date}</span></div>
+      <div class="sum-row"><span style="color:#555d6e">進度</span><span style="font-weight:600;color:#f0c000">${payload.progress_pct}%</span></div>
+      <div class="sum-row"><span style="color:#555d6e">狀態</span><span style="font-weight:600">${statusIcon[status]||''} ${status}</span></div>`;
+  }catch(e){btn.disabled=false;btn.textContent='📤 提交日報';toast('❌ 提交失敗，請重試');}
 }
 
-async function downloadPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
-  doc.setFillColor(13,15,18);doc.rect(0,0,210,297,'F');
-  doc.setTextColor(240,192,0);doc.setFontSize(15);doc.setFont('helvetica','bold');
-  doc.text('Jun Hui Elevator Engineering Co. Ltd.',105,18,{align:'center'});
-  doc.setFontSize(11);doc.text('Salary Acknowledgement Receipt',105,26,{align:'center'});
-  doc.setDrawColor(240,192,0);doc.setLineWidth(0.4);doc.line(20,30,190,30);
-  const [yr,mo]=payData.month.split('-');
-  doc.setTextColor(232,234,240);doc.setFontSize(10);doc.setFont('helvetica','normal');
-  let y=40;
-  [['Employee',emp.name],['Pay Period',`${yr} Year ${parseInt(mo)} Month`],['Basic Rate',`HK$${payData.base.toLocaleString()}/day`],['Working Days',`${payData.totalDays} days`],['Holiday Shifts',payData.holidayDays>0?`${payData.holidayDays} days`:'None'],['Night Shifts',payData.nightShifts>0?`${payData.nightShifts} shifts`:'None'],['Total Received',`HK$${payData.total.toLocaleString()}`],['Confirmed At',signedAt.slice(0,16)+' HKT']].forEach(([l,v])=>{
-    doc.setTextColor(150,160,180);doc.text(l+':',20,y);
-    doc.setTextColor(l==='Total Received'?34:232,l==='Total Received'?197:234,l==='Total Received'?94:240);
-    doc.setFont('helvetica',l==='Total Received'?'bold':'normal');
-    doc.text(v,85,y);y+=8;
-    doc.setFont('helvetica','normal');
-  });
-  doc.setDrawColor(42,48,69);doc.line(20,y,190,y);y+=8;
-  doc.setTextColor(240,192,0);doc.setFontSize(11);doc.setFont('helvetica','bold');
-  doc.text('Employee Signature:',20,y);y+=6;
-  doc.setDrawColor(42,48,69);doc.setLineWidth(0.3);doc.rect(20,y,170,36);
-  if(sigURL)try{doc.addImage(sigURL,'PNG',22,y+2,166,32);}catch(e){}
-  y+=42;
-  doc.setTextColor(80,90,110);doc.setFontSize(8);doc.setFont('helvetica','normal');
-  doc.text('Electronically signed — Jun Hui Payday Portal',105,y,{align:'center'});
-  doc.save(`${emp.name}_Salary_${payData.month}.pdf`);
+function resetForm(){
+  document.getElementById('successScreen').style.display='none';
+  document.getElementById('mainContent').style.display='block';
+  document.getElementById('workInp').value='';
+  document.getElementById('issueInp').value='';
+  document.getElementById('planInp').value='';
+  document.getElementById('pctSlider').value=0;updPct();
+  document.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('sel'));
+  status=null;
+  const btn=document.getElementById('submitBtn');btn.disabled=false;btn.textContent='📤 提交日報';
 }
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
