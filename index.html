@@ -3,25 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>俊輝電梯 — 出糧確認</title>
+<title>俊輝電梯 — 出糧確認簽署</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;background:#0d0f12;color:#e8eaf0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px}
 .header{text-align:center;margin-bottom:24px;padding-top:12px}
 .company{font-size:17px;font-weight:700;color:#f0c000}
+.subtitle{font-size:12px;color:#555d6e;margin-top:3px}
 .card{background:#13161c;border:1px solid #1e2330;border-radius:14px;padding:20px;width:100%;max-width:480px;margin-bottom:14px}
-.badge{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:#0d0f12;border-radius:10px;border:1px solid #2a3045}
+.emp-badge{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px;background:#0d0f12;border-radius:10px;border:1px solid #2a3045}
 .avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
-.pay-box{background:#0a1a0a;border:1px solid #22c55e33;border-radius:12px;padding:20px;margin-bottom:16px;text-align:center}
-.pay-label{font-size:12px;color:#555d6e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
-.pay-amount{font-size:40px;font-weight:800;color:#22c55e;margin-bottom:4px}
-.pay-period{font-size:13px;color:#9aa0b4}
-.breakdown{background:#0d0f12;border:1px solid #1e2330;border-radius:10px;padding:14px;margin-bottom:16px}
-.bk-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #1e2330}
-.bk-row:last-child{border-bottom:none}
-.bk-label{color:#555d6e}
-.bk-val{font-weight:600}
+.section-title{font-size:12px;font-weight:700;color:#f0c000;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.summary-box{background:#0d0f12;border:1px solid #2a3045;border-radius:10px;padding:14px;text-align:center}
+.summary-num{font-size:26px;font-weight:800;color:#f0c000}
+.summary-label{font-size:11px;color:#555d6e;margin-top:4px}
+.att-list{background:#0d0f12;border:1px solid #2a3045;border-radius:10px;padding:10px 14px;max-height:280px;overflow-y:auto;margin-bottom:16px}
+.att-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #1a1e28;font-size:13px}
+.att-row:last-child{border-bottom:none}
+.att-date{color:#9aa0b4;width:70px;flex-shrink:0}
+.att-shift{flex:1;font-weight:600}
+.att-time{color:#555d6e;font-size:12px}
+.empty-att{text-align:center;color:#3a4255;font-size:13px;padding:20px}
 .checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;cursor:pointer}
 .checkbox-row input{width:20px;height:20px;accent-color:#f0c000;flex-shrink:0;margin-top:2px;cursor:pointer}
 .checkbox-row span{font-size:13px;line-height:1.6;color:#9aa0b4}
@@ -29,276 +34,360 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
 .sig-wrap.has-sig{border-color:#f0c00066}
 .sig-wrap canvas{display:block;width:100%;touch-action:none}
 .sig-hint{font-size:11px;color:#3a4255;text-align:center;margin-bottom:12px}
-.lbl{display:block;font-size:11px;color:#9aa0b4;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;font-weight:600}
-.row{display:flex;gap:8px}
-.btn{flex:1;border-radius:8px;padding:12px;cursor:pointer;font-size:13px;font-weight:700;border:none}
+.row{display:flex;gap:8px;margin-bottom:0}
+.btn{flex:1;border-radius:8px;padding:11px;cursor:pointer;font-size:13px;font-weight:700;border:none}
 .btn-ghost{background:#1e2330;border:1px solid #2a3045;color:#9aa0b4}
-.btn-green{background:#22c55e;color:#0d0f12}
-.btn-green:disabled{opacity:0.4;cursor:not-allowed}
-.btn-pdf{width:100%;background:#1e2330;border:1px solid #f0c00044;color:#f0c000;border-radius:8px;padding:12px;cursor:pointer;font-size:14px;font-weight:700;margin-top:10px}
+.btn-primary{background:#f0c000;color:#0d0f12}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+.btn-pdf{width:auto;padding:8px 12px;margin:0;font-size:12px;flex-shrink:0;background:#1e2330;border:1px solid #f0c00044;color:#f0c000;border-radius:5px;cursor:pointer}
+.btn-del{width:auto;padding:8px 12px;margin:0 0 0 6px;font-size:12px;flex-shrink:0;background:none;border:1px solid #e05c5c44;color:#e05c5c;border-radius:5px;cursor:pointer}
 .success{text-align:center;padding:24px 16px}
+.tick{font-size:56px;margin-bottom:12px}
 .sum{background:#0d0f12;border:1px solid #1e2330;border-radius:10px;padding:14px;margin:14px 0;text-align:left}
 .sum-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #1e2330}
 .sum-row:last-child{border-bottom:none}
-.loading{text-align:center;padding:40px 20px;color:#555d6e}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#e05c5c;color:#fff;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:999}
 .toast.show{opacity:1}
+.print-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #1e2330}
+.print-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
 <div class="header">
-  <div style="font-size:32px;margin-bottom:6px">💰</div>
+  <div style="font-size:32px;margin-bottom:6px">&#x1F4B0;</div>
   <div class="company">巨揚工程有限公司</div>
-  <div style="font-size:12px;color:#555d6e;margin-top:3px">出糧確認簽署</div>
+  <div class="subtitle">出糧確認簽署</div>
 </div>
 
 <div id="errorScreen" style="display:none;text-align:center;padding:60px 20px">
   <div style="font-size:48px;margin-bottom:16px">⚠️</div>
-  <div style="font-size:18px;font-weight:700;color:#e05c5c;margin-bottom:8px">連結無效</div>
-  <div style="color:#555d6e;font-size:14px">請向主管索取正確嘅確認連結</div>
-</div>
-
-<div id="loadingScreen" style="display:none">
-  <div class="card loading">
-    <div style="font-size:32px;margin-bottom:12px">⏳</div>
-    <div>載入薪酬資料中...</div>
-  </div>
+  <div style="font-size:18px;font-weight:700;color:#e05c5c;margin-bottom:8px">連結無效或系統錯誤</div>
+  <div style="color:#555d6e;font-size:14px" id="errorMsg">請向主管索取正確嘅簽署連結</div>
 </div>
 
 <div id="mainContent" style="width:100%;max-width:480px;display:none">
   <div class="card">
-    <div class="badge">
+    <div class="emp-badge">
       <div class="avatar" id="empAvatar">?</div>
       <div>
         <div style="font-size:17px;font-weight:700" id="empName">載入中...</div>
-        <div style="font-size:11px;color:#555d6e;margin-top:2px" id="payPeriodBadge">電梯技工</div>
+        <div style="font-size:11px;color:#555d6e;margin-top:2px" id="monthLabel"></div>
       </div>
     </div>
 
-    <!-- Pay amount -->
-    <div class="pay-box">
-      <div class="pay-label">本月實收金額</div>
-      <div class="pay-amount" id="payAmount">HK$0</div>
-      <div class="pay-period" id="payPeriod">—</div>
+    <div class="summary-grid">
+      <div class="summary-box">
+        <div class="summary-num" id="daysNum">0</div>
+        <div class="summary-label">出勤日數</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-num" style="color:#555d6e;font-size:20px">$0</div>
+        <div class="summary-label">待主管確認</div>
+      </div>
     </div>
 
-    <!-- Breakdown -->
-    <div class="breakdown" id="breakdown">
-      <div class="bk-row"><span class="bk-label">基本薪酬</span><span class="bk-val" id="bkBase">—</span></div>
-      <div class="bk-row"><span class="bk-label">出勤天數</span><span class="bk-val" id="bkDays">—</span></div>
-      <div class="bk-row"><span class="bk-label">假日更</span><span class="bk-val" id="bkHoliday">—</span></div>
-      <div class="bk-row"><span class="bk-label">夜更津貼</span><span class="bk-val" id="bkNight">—</span></div>
-      <div class="bk-row" style="border-top:1px solid #f0c00033;margin-top:4px;padding-top:10px"><span style="color:#f0c000;font-weight:700">實收合計</span><span style="color:#22c55e;font-weight:800" id="bkTotal">—</span></div>
+    <div class="section-title">📋 本月出勤紀錄</div>
+    <div class="att-list" id="attList">
+      <div class="empty-att">載入中...</div>
     </div>
 
-    <!-- Confirm checkbox -->
     <label class="checkbox-row">
       <input type="checkbox" id="agreeCheck" onchange="updateState()">
-      <span>本人確認已收取上述薪酬，金額正確無誤，並同意此電子簽署具有法律效力。</span>
+      <span>本人已核對以上本月出勤紀錄，確認資料無誤，並同意以此紀錄作為出糧依據。</span>
     </label>
 
-    <!-- Dispute option -->
-    <label class="checkbox-row" style="margin-bottom:20px">
-      <input type="checkbox" id="disputeCheck" onchange="toggleDispute()">
-      <span style="color:#e05c5c">金額有異議（勾選後請填寫備註）</span>
-    </label>
-    <div id="disputeBox" style="display:none;margin-bottom:16px">
-      <label class="lbl">📝 異議說明</label>
-      <textarea style="width:100%;background:#0d0f12;border:1px solid #e05c5c55;border-radius:10px;color:#e8eaf0;font-size:14px;padding:12px;outline:none;resize:none;height:80px;font-family:inherit" id="disputeText" placeholder="請說明異議原因..."></textarea>
-    </div>
-
-    <!-- Signature -->
-    <label class="lbl">✍️ 電子簽名確認</label>
+    <div class="section-title">✍️ 電子簽名</div>
     <div class="sig-wrap" id="sigWrap">
-      <canvas id="sigCanvas" height="150"></canvas>
+      <canvas id="sigCanvas" height="140"></canvas>
     </div>
     <div class="sig-hint">請用手指或滑鼠在上方簽名</div>
 
     <div class="row">
-      <button class="btn btn-ghost" onclick="clearSig()">🗑 清除</button>
-      <button class="btn btn-green" id="submitBtn" onclick="doSubmit()" disabled>✅ 確認簽收</button>
+      <button class="btn btn-ghost" onclick="clearSig()">🗑 清除簽名</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="doSubmit()" disabled>✅ 確認簽署</button>
     </div>
   </div>
 </div>
 
 <div id="successScreen" style="display:none;width:100%;max-width:480px">
   <div class="card success">
-    <div style="font-size:56px;margin-bottom:12px">✅</div>
-    <h2 style="font-size:20px;font-weight:800;color:#22c55e;margin-bottom:8px">簽收完成！</h2>
+    <div class="tick">✅</div>
+    <h2 style="font-size:20px;font-weight:800;color:#22c55e;margin-bottom:8px">確認完成！</h2>
     <div class="sum" id="sumBox"></div>
-    <p style="color:#9aa0b4;font-size:13px">薪酬簽收紀錄已儲存</p>
-    <button class="btn-pdf" onclick="downloadPDF()">📄 下載 PDF 簽收紀錄</button>
+    <p style="color:#9aa0b4;font-size:13px">此確認紀錄已儲存至公司系統</p>
   </div>
 </div>
 
-<div id="disputeSuccessScreen" style="display:none;width:100%;max-width:480px">
-  <div class="card success">
-    <div style="font-size:56px;margin-bottom:12px">📋</div>
-    <h2 style="font-size:20px;font-weight:800;color:#e05c5c;margin-bottom:8px">異議已提交</h2>
-    <p style="color:#9aa0b4;font-size:13px;line-height:1.7">你嘅異議已記錄，主管會盡快聯絡你核實。</p>
+<div id="adminScreen" style="display:none;width:100%;max-width:560px">
+  <div class="card">
+    <div style="font-size:16px;font-weight:700;color:#f0c000;margin-bottom:4px">📄 出糧確認紀錄補印</div>
+    <div style="font-size:12px;color:#555d6e;margin-bottom:16px">公司內部使用｜點選紀錄下載 PDF</div>
+    <div id="adminList" style="font-size:13px;color:#9aa0b4">載入中...</div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+const SB_URL = 'https://fyxvejnvzflxppqrhlzt.supabase.co';
+const SB_KEY = 'sb_publishable_k9GEEEmqiYnuBPFqsQuvIQ_YGjweOSh';
+const SHIFT_LABEL = { morning:'早更', night:'夜更', holiday:'假日更', freelance:'散工' };
+const COLORS = ['#FF6B1A','#22C55E','#60A5FA','#A78BFA','#FB923C','#F43F5E','#06B6D4','#84CC16','#E879F9','#F0C000'];
 
+let emp = null, month = '', hasSig = false, sigDataURL = null, signedAt = null;
+let canvas, ctx, drawing = false, lx, ly;
+let allEmployees = [];
+let attRows = [];
 
-let emp=null,hasSig=false,sigURL=null,signedAt=null,payData=null;
-let canvas,ctx,drawing=false,lx,ly;
+function init() {
+  if (location.hash.slice(1).split('&')[0] === 'print') { return loadAdmin(); }
 
-const p=new URLSearchParams(location.hash.slice(1));
-emp=EMPLOYEES.find(e=>e.id===parseInt(p.get('emp')||'0'));
-const payMonth=p.get('month')||new Date().toISOString().slice(0,7);
+  const p = new URLSearchParams(location.hash.slice(1));
+  const empName = decodeURIComponent(p.get('emp') || '');
+  month = p.get('month') || new Date().toISOString().slice(0, 7);
 
-if(!emp){document.getElementById('errorScreen').style.display='block';}
-else{loadPayData();}
+  if (!empName) {
+    document.getElementById('errorScreen').style.display = 'block';
+    return;
+  }
 
-async function loadPayData(){
-  document.getElementById('loadingScreen').style.display='block';
-  const hk=new Date(Date.now()+8*3600000);
-  const [yr,mo]=payMonth.split('-');
-  const start=`${payMonth}-01`, end=`${payMonth}-31`;
+  emp = allEmployees.find(e => e.name === empName) || { name: empName, color: COLORS[0] };
 
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/attendance?employee_name=eq.${encodeURIComponent(emp.name)}&date=gte.${start}&date=lte.${end}&select=date,shift_type,clock_in,clock_out`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
-    const rows=await r.json();
+  document.getElementById('mainContent').style.display = 'block';
+  document.getElementById('empName').textContent = emp.name;
+  document.getElementById('monthLabel').textContent = month.slice(0,4) + '年' + parseInt(month.slice(5,7)) + '月份出糧確認';
+  const av = document.getElementById('empAvatar');
+  av.textContent = emp.name[0];
+  av.style.background = emp.color + '33';
+  av.style.color = emp.color;
+  av.style.border = '2px solid ' + emp.color + '66';
 
-    let normalDays=0,holidayDays=0,nightShifts=0;
-    if(Array.isArray(rows)){
-      rows.forEach(row=>{
-        if(row.shift_type==='假日更')holidayDays++;
-        else if(row.shift_type==='夜更')nightShifts++;
-        else normalDays++;
-      });
+  initCanvas();
+  loadAttendance();
+}
+
+async function loadAttendance() {
+  const box = document.getElementById('attList');
+  try {
+    const nextMonth = (() => {
+      const parts = month.split('-').map(Number);
+      const y = parts[0], m = parts[1];
+      return m === 12 ? (y+1) + '-01-01' : y + '-' + String(m+1).padStart(2,'0') + '-01';
+    })();
+    const url = SB_URL + '/rest/v1/attendance?employee_name=eq.' + encodeURIComponent(emp.name) + '&date=gte.' + month + '-01&date=lt.' + nextMonth + '&order=date.asc';
+    const resp = await fetch(url, { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    attRows = await resp.json();
+
+    document.getElementById('daysNum').textContent = attRows.length;
+
+    if (!attRows.length) {
+      box.innerHTML = '<div class="empty-att">本月尚未有出勤紀錄</div>';
+      return;
     }
-
-    const base=emp.rate;
-    const holidayPay=holidayDays*base*1.5;
-    const nightPay=nightShifts*150;
-    const totalDays=normalDays+holidayDays+nightShifts;
-    const dailyBase=totalDays*base;
-    const total=dailyBase+nightPay;
-
-    payData={base,normalDays,holidayDays,nightShifts,totalDays,holidayPay,nightPay,total,month:payMonth};
-
-    document.getElementById('loadingScreen').style.display='none';
-    document.getElementById('mainContent').style.display='block';
-    document.getElementById('empName').textContent=emp.name;
-    document.getElementById('payPeriodBadge').textContent=`電梯技工 | ${yr}年${parseInt(mo)}月薪酬`;
-    document.getElementById('payAmount').textContent=`HK$${total.toLocaleString()}`;
-    document.getElementById('payPeriod').textContent=`薪酬期：${yr}年${parseInt(mo)}月`;
-    document.getElementById('bkBase').textContent=`HK$${base.toLocaleString()}/日`;
-    document.getElementById('bkDays').textContent=`${totalDays} 天`;
-    document.getElementById('bkHoliday').textContent=holidayDays>0?`${holidayDays} 天 (+HK$${((base*0.5)*holidayDays).toLocaleString()})`:'—';
-    document.getElementById('bkNight').textContent=nightShifts>0?`${nightShifts} 更 (+HK$${nightPay.toLocaleString()})`:'—';
-    document.getElementById('bkTotal').textContent=`HK$${total.toLocaleString()}`;
-
-    const av=document.getElementById('empAvatar');
-    av.textContent=emp.name[0];av.style.background=emp.color+'33';av.style.color=emp.color;av.style.border='2px solid '+emp.color+'66';
-    initCanvas();
-  }catch(e){
-    document.getElementById('loadingScreen').style.display='none';
-    document.getElementById('errorScreen').style.display='block';
+    box.innerHTML = attRows.map(function(r) {
+      return '<div class="att-row">' +
+        '<span class="att-date">' + String(r.date).slice(5) + '</span>' +
+        '<span class="att-shift">' + (SHIFT_LABEL[r.shift_type] || r.shift_type || '-') + '</span>' +
+        '<span class="att-time">' + (r.clock_in || '') + (r.clock_out ? ' - ' + r.clock_out : '') + '</span>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[ATTENDANCE]', e.message);
+    box.innerHTML = '<div class="empty-att">讀取失敗：' + e.message + '</div>';
   }
 }
 
-function toggleDispute(){
-  const d=document.getElementById('disputeCheck').checked;
-  document.getElementById('disputeBox').style.display=d?'block':'none';
-  if(d){document.getElementById('agreeCheck').checked=false;}
+function updateState() {
+  document.getElementById('submitBtn').disabled = !(document.getElementById('agreeCheck').checked && hasSig);
+}
+
+function initCanvas() {
+  canvas = document.getElementById('sigCanvas');
+  ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * (devicePixelRatio || 1);
+  canvas.height = 140 * (devicePixelRatio || 1);
+  ctx.scale(devicePixelRatio || 1, devicePixelRatio || 1);
+  ctx.strokeStyle = '#f0c000'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  var pos = function(e) { var r = canvas.getBoundingClientRect(); var s = e.touches ? e.touches[0] : e; return [s.clientX - r.left, s.clientY - r.top]; };
+  canvas.addEventListener('mousedown', function(e) { drawing = true; var p = pos(e); lx = p[0]; ly = p[1]; });
+  canvas.addEventListener('mousemove', function(e) { if (!drawing) return; var p = pos(e); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(p[0], p[1]); ctx.stroke(); lx = p[0]; ly = p[1]; });
+  canvas.addEventListener('mouseup', function() { drawing = false; chkSig(); });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); drawing = true; var p = pos(e); lx = p[0]; ly = p[1]; }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { e.preventDefault(); if (!drawing) return; var p = pos(e); ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(p[0], p[1]); ctx.stroke(); lx = p[0]; ly = p[1]; }, { passive: false });
+  canvas.addEventListener('touchend', function() { drawing = false; chkSig(); });
+}
+
+function chkSig() {
+  const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  hasSig = d.some(function(v, i) { return i % 4 === 3 && v > 0; });
+  if (hasSig) document.getElementById('sigWrap').classList.add('has-sig');
   updateState();
 }
-function updateState(){
-  const agreed=document.getElementById('agreeCheck').checked;
-  document.getElementById('submitBtn').disabled=!(agreed&&hasSig);
-}
-function initCanvas(){
-  canvas=document.getElementById('sigCanvas');ctx=canvas.getContext('2d');
-  canvas.width=(canvas.offsetWidth||440)*devicePixelRatio;canvas.height=150*devicePixelRatio;
-  ctx.scale(devicePixelRatio,devicePixelRatio);
-  ctx.strokeStyle='#22c55e';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
-  const pos=e=>{const r=canvas.getBoundingClientRect();const s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];};
-  canvas.addEventListener('mousedown',e=>{drawing=true;[lx,ly]=pos(e);});
-  canvas.addEventListener('mousemove',e=>{if(!drawing)return;const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();[lx,ly]=[x,y];});
-  canvas.addEventListener('mouseup',()=>{drawing=false;chkSig();});
-  canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;[lx,ly]=pos(e);},{passive:false});
-  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const[x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();[lx,ly]=[x,y];},{passive:false});
-  canvas.addEventListener('touchend',()=>{drawing=false;chkSig();});
-}
-function chkSig(){const d=ctx.getImageData(0,0,canvas.width,canvas.height).data;hasSig=d.some((v,i)=>i%4===3&&v>0);if(hasSig)document.getElementById('sigWrap').classList.add('has-sig');updateState();}
-function clearSig(){ctx.clearRect(0,0,canvas.width,canvas.height);hasSig=false;document.getElementById('sigWrap').classList.remove('has-sig');updateState();}
-
-async function doSubmit(){
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true;btn.textContent='儲存中...';
-  sigURL=canvas.toDataURL('image/png');signedAt=new Date().toISOString();
-  const isDispute=document.getElementById('disputeCheck').checked;
-  const disputeText=document.getElementById('disputeText').value.trim();
-
-  try{
-    await fetch(`${SB_URL}/rest/v1/payday_confirmations`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({employee_name:emp.name,pay_month:payData.month,amount:payData.total,days:payData.totalDays,confirmed:!isDispute,dispute_reason:disputeText||null,signature_data:sigURL,signed_at:signedAt})});
-
-    document.getElementById('mainContent').style.display='none';
-    if(isDispute){document.getElementById('disputeSuccessScreen').style.display='block';return;}
-    document.getElementById('successScreen').style.display='block';
-    const [yr,mo]=payData.month.split('-');
-    document.getElementById('sumBox').innerHTML=`
-      <div class="sum-row"><span style="color:#555d6e">姓名</span><span style="font-weight:600">${emp.name}</span></div>
-      <div class="sum-row"><span style="color:#555d6e">薪酬月份</span><span style="font-weight:600">${yr}年${parseInt(mo)}月</span></div>
-      <div class="sum-row"><span style="color:#555d6e">實收金額</span><span style="font-weight:600;color:#22c55e">HK$${payData.total.toLocaleString()}</span></div>
-      <div class="sum-row"><span style="color:#555d6e">出勤天數</span><span style="font-weight:600">${payData.totalDays} 天</span></div>
-      <div class="sum-row"><span style="color:#555d6e">確認時間</span><span style="font-weight:600">${signedAt.slice(0,16).replace('T',' ')}</span></div>`;
-  }catch(e){btn.disabled=false;btn.textContent='✅ 確認簽收';toast('❌ 儲存失敗，請重試');}
+function clearSig() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSig = false;
+  document.getElementById('sigWrap').classList.remove('has-sig');
+  updateState();
 }
 
-async function downloadPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
-  doc.setFillColor(13,15,18);doc.rect(0,0,210,297,'F');
-  doc.setTextColor(240,192,0);doc.setFontSize(15);doc.setFont('helvetica','bold');
-  doc.text('Keung Yeung Engineering Co. Ltd.',105,18,{align:'center'});
-  doc.setFontSize(11);doc.text('Salary Acknowledgement Receipt',105,26,{align:'center'});
-  doc.setDrawColor(240,192,0);doc.setLineWidth(0.4);doc.line(20,30,190,30);
-  const [yr,mo]=payData.month.split('-');
-  doc.setTextColor(232,234,240);doc.setFontSize(10);doc.setFont('helvetica','normal');
-  let y=40;
-  [['Employee',emp.name],['Pay Period',`${yr} Year ${parseInt(mo)} Month`],['Basic Rate',`HK$${payData.base.toLocaleString()}/day`],['Working Days',`${payData.totalDays} days`],['Holiday Shifts',payData.holidayDays>0?`${payData.holidayDays} days`:'None'],['Night Shifts',payData.nightShifts>0?`${payData.nightShifts} shifts`:'None'],['Total Received',`HK$${payData.total.toLocaleString()}`],['Confirmed At',signedAt.slice(0,16)+' HKT']].forEach(([l,v])=>{
-    doc.setTextColor(150,160,180);doc.text(l+':',20,y);
-    doc.setTextColor(l==='Total Received'?34:232,l==='Total Received'?197:234,l==='Total Received'?94:240);
-    doc.setFont('helvetica',l==='Total Received'?'bold':'normal');
-    doc.text(v,85,y);y+=8;
-    doc.setFont('helvetica','normal');
-  });
-  doc.setDrawColor(42,48,69);doc.line(20,y,190,y);y+=8;
-  doc.setTextColor(240,192,0);doc.setFontSize(11);doc.setFont('helvetica','bold');
-  doc.text('Employee Signature:',20,y);y+=6;
-  doc.setDrawColor(42,48,69);doc.setLineWidth(0.3);doc.rect(20,y,170,36);
-  if(sigURL)try{doc.addImage(sigURL,'PNG',22,y+2,166,32);}catch(e){}
-  y+=42;
-  doc.setTextColor(80,90,110);doc.setFontSize(8);doc.setFont('helvetica','normal');
-  doc.text('Electronically signed — Keung Yeung Payday Portal',105,y,{align:'center'});
-  doc.save(`${emp.name}_Salary_${payData.month}.pdf`);
+async function doSubmit() {
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '儲存中...';
+  sigDataURL = canvas.toDataURL('image/png');
+  signedAt = new Date().toISOString();
+  try {
+    const resp = await fetch(SB_URL + '/rest/v1/payday_confirmations', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        employee_name: emp.name,
+        pay_month: month,
+        amount: 0,
+        days: attRows.length,
+        confirmed: true,
+        signature_data: sigDataURL,
+        signed_at: signedAt
+      })
+    });
+    if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + ' — ' + t); }
+
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('successScreen').style.display = 'block';
+    document.getElementById('sumBox').innerHTML =
+      '<div class="sum-row"><span style="color:#555d6e">姓名</span><span style="font-weight:600">' + emp.name + '</span></div>' +
+      '<div class="sum-row"><span style="color:#555d6e">月份</span><span style="font-weight:600">' + month + '</span></div>' +
+      '<div class="sum-row"><span style="color:#555d6e">出勤日數</span><span style="font-weight:600">' + attRows.length + ' 日</span></div>' +
+      '<div class="sum-row"><span style="color:#555d6e">確認時間</span><span style="font-weight:600">' + signedAt.slice(0,10) + ' ' + signedAt.slice(11,16) + '</span></div>';
+  } catch (e) {
+    console.error('[SUBMIT ERROR]', e.message);
+    btn.disabled = false; btn.textContent = '✅ 確認簽署';
+    toast('❌ 儲存失敗：' + e.message);
+  }
 }
 
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
 
-const SB_URL='https://fyxvejnvzflxppqrhlzt.supabase.co',SB_KEY='sb_publishable_k9GEEEmqiYnuBPFqsQuvIQ_YGjweOSh';
-const COLORS=['#FF6B1A', '#22C55E', '#60A5FA', '#A78BFA', '#FB923C', '#F43F5E', '#06B6D4', '#84CC16', '#E879F9', '#F0C000', '#22C55E', '#60A5FA', '#A78BFA', '#FB923C', '#FF6B1A', '#22C55E'];
-let EMPLOYEES=[];
+// ── 公司補印頁 ──────────────────────────────
+async function loadAdmin() {
+  document.getElementById('adminScreen').style.display = 'block';
+  const box = document.getElementById('adminList');
+  try {
+    const url = SB_URL + '/rest/v1/payday_confirmations?order=signed_at.desc&limit=200';
+    const resp = await fetch(url, { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const rows = await resp.json();
+    if (!rows.length) { box.textContent = '暫無確認紀錄'; return; }
 
-async function loadEmployees(){
-  try{
-    const r=await fetch(`${SB_URL}/rest/v1/employees?select=id,name,phone&order=id.asc`,
-      {headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`}});
-    const data=await r.json();
-    if(Array.isArray(data)){
-      EMPLOYEES=data.map((e,i)=>({id:e.id,name:e.name,phone:e.phone||'',color:COLORS[i%COLORS.length]}));
+    box.innerHTML = '';
+    rows.forEach(function(r) {
+      const row = document.createElement('div');
+      row.className = 'print-row';
+      row.innerHTML =
+        '<div><div style="font-weight:700;color:#e8eaf0;font-size:14px">' + r.employee_name + '　' + r.pay_month + '</div>' +
+        '<div style="font-size:11px;color:#555d6e;margin-top:3px">確認 ' + String(r.signed_at).slice(0,10) + '　出勤 ' + (r.days != null ? r.days : '-') + ' 日</div></div>';
+      const actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;flex-shrink:0';
+
+      const dl = document.createElement('button');
+      dl.className = 'btn-pdf';
+      dl.textContent = '下載 PDF';
+      dl.onclick = function() { buildPaydayPDF(r, dl); };
+
+      const del = document.createElement('button');
+      del.className = 'btn-del';
+      del.textContent = '刪除';
+      del.onclick = function() { deletePaydayRecord(r, row, del); };
+
+      actions.appendChild(dl); actions.appendChild(del);
+      row.appendChild(actions);
+      box.appendChild(row);
+    });
+  } catch (e) {
+    box.textContent = '讀取失敗：' + e.message;
+  }
+}
+
+async function deletePaydayRecord(rec, rowEl, btn) {
+  if (!window.confirm('確定刪除 ' + rec.employee_name + ' 於 ' + rec.pay_month + ' 嘅出糧確認紀錄？\n\n刪除後無法復原。')) return;
+  btn.disabled = true; btn.textContent = '刪除中...';
+  try {
+    const resp = await fetch(SB_URL + '/rest/v1/payday_confirmations?id=eq.' + rec.id, {
+      method: 'DELETE',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    rowEl.remove();
+    toast('🗑 已刪除 ' + rec.employee_name + ' ' + rec.pay_month);
+  } catch (e) {
+    console.error('[DELETE ERROR]', e.message);
+    btn.disabled = false; btn.textContent = '刪除';
+    toast('❌ 刪除失敗');
+  }
+}
+
+async function buildPaydayPDF(rec, btn) {
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = '產生中...';
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;padding:56px 64px;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"PingFang HK","Microsoft JhengHei",sans-serif;box-sizing:border-box;';
+  sheet.innerHTML =
+    '<div style="text-align:center;border-bottom:3px solid #b8860b;padding-bottom:18px;margin-bottom:26px">' +
+      '<div style="font-size:26px;font-weight:800;letter-spacing:2px">巨揚工程有限公司</div>' +
+      '<div style="font-size:13px;color:#666;margin-top:4px">Keung Yeung Engineering Co. Ltd.</div>' +
+      '<div style="font-size:17px;font-weight:700;margin-top:14px">出糧確認簽署</div>' +
+    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:26px">' +
+      '<tr><td style="padding:8px 0;color:#666;width:120px">員工姓名</td><td style="padding:8px 0;font-weight:700;font-size:16px">' + rec.employee_name + '</td></tr>' +
+      '<tr><td style="padding:8px 0;color:#666">薪酬月份</td><td style="padding:8px 0;font-weight:600">' + rec.pay_month + '</td></tr>' +
+      '<tr><td style="padding:8px 0;color:#666">出勤日數</td><td style="padding:8px 0;font-weight:700;color:#b8860b">' + (rec.days != null ? rec.days : '-') + ' 日</td></tr>' +
+      '<tr><td style="padding:8px 0;color:#666">確認時間</td><td style="padding:8px 0;font-weight:600">' + String(rec.signed_at).slice(0,10) + '　' + String(rec.signed_at).slice(11,16) + ' HKT</td></tr>' +
+    '</table>' +
+    '<div style="font-size:13px;font-weight:600;margin-bottom:20px">本人已核對本月出勤紀錄，確認資料無誤，並同意以此紀錄作為出糧依據。</div>' +
+    '<div>' +
+      '<div style="font-size:13px;color:#666;margin-bottom:6px">員工簽名 Employee Signature</div>' +
+      '<div style="border:1px solid #bbb;height:110px;display:flex;align-items:center;justify-content:center;background:#fafafa">' +
+        (rec.signature_data ? '<img src="' + rec.signature_data + '" style="max-height:100px;max-width:96%;filter:invert(1) hue-rotate(180deg) saturate(0) contrast(2)">' : '<span style="color:#bbb;font-size:12px">簽名未存檔</span>') +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:30px;padding-top:14px;border-top:1px solid #ddd;text-align:center;font-size:10px;color:#888;line-height:1.8">' +
+      '本文件以電子方式簽署，具法律約束力<br>巨揚工程有限公司安全管理系統　產生時間：' + new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' }) +
+    '</div>';
+
+  document.body.appendChild(sheet);
+  try {
+    const cv = await html2canvas(sheet, { scale: 1.5, backgroundColor: '#ffffff', logging: false });
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const doc = new jsPDFCtor({ orientation: 'p', unit: 'mm', format: 'a4' });
+    const imgW = 210, imgH = (cv.height * imgW) / cv.width;
+    doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgW, imgH);
+    doc.save(rec.employee_name + '_出糧確認_' + rec.pay_month + '.pdf');
+  } catch (e) {
+    console.error('[PDF ERROR]', e.message);
+    toast('❌ PDF 產生失敗');
+  } finally {
+    sheet.remove();
+    btn.disabled = false; btn.textContent = original;
+  }
+}
+
+async function loadEmployees() {
+  try {
+    const url = SB_URL + '/rest/v1/employees?select=id,name,phone&order=id.asc';
+    const resp = await fetch(url, { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } });
+    if (resp.ok) {
+      const data = await resp.json();
+      allEmployees = (data || []).map(function(e, i) { return { id: e.id, name: e.name, color: COLORS[i % COLORS.length] }; });
     }
-  }catch(e){}
+  } catch (e) { console.warn('[EMPLOYEES]', e.message); }
   init();
 }
+
 loadEmployees();
 </script>
 </body>
