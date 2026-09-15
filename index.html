@@ -27,6 +27,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
 .att-shift{flex:1;font-weight:600}
 .att-time{color:#555d6e;font-size:12px}
 .empty-att{text-align:center;color:#3a4255;font-size:13px;padding:20px}
+
+.payslip{background:#0d0f12;border:1px solid #2a3045;border-radius:10px;padding:14px;margin-bottom:16px}
+.payslip-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e2330;font-size:13px}
+.payslip-row:last-child{border-bottom:none}
+.payslip-row .lbl{color:#555d6e}
+.payslip-row .val{font-weight:700;color:#e8eaf0}
+.payslip-row.sub{background:#1a1608;margin:6px -14px;padding:10px 14px;border-radius:6px;border:none}
+.payslip-row.sub .val{color:#f0c000}
+.payslip-row.deduct .val{color:#e05c5c}
+.payslip-row.net{background:#0a1f0f;margin:8px -14px 0;padding:12px 14px;border-radius:6px;border:none}
+.payslip-row.net .val{color:#22c55e;font-size:16px}
+.payslip-row.employer{opacity:0.65;font-size:11px;padding-top:8px;margin-top:8px;border-top:1px dashed #2a3045}
+
 .checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;cursor:pointer}
 .checkbox-row input{width:20px;height:20px;accent-color:#f0c000;flex-shrink:0;margin-top:2px;cursor:pointer}
 .checkbox-row span{font-size:13px;line-height:1.6;color:#9aa0b4}
@@ -81,8 +94,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
         <div class="summary-label">出勤日數</div>
       </div>
       <div class="summary-box">
-        <div class="summary-num" style="color:#555d6e;font-size:20px">$0</div>
-        <div class="summary-label">待主管確認</div>
+        <div class="summary-num" id="netPayNum" style="font-size:20px">計算中...</div>
+        <div class="summary-label">實際到手</div>
       </div>
     </div>
 
@@ -91,9 +104,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
       <div class="empty-att">載入中...</div>
     </div>
 
+    <div class="section-title">💵 薪酬明細</div>
+    <div class="payslip">
+      <div class="payslip-row">
+        <span class="lbl">職位</span>
+        <span class="val">電梯技工</span>
+      </div>
+      <div class="payslip-row">
+        <span class="lbl">日薪</span>
+        <span class="val">HK$<span id="dailyRateVal">—</span></span>
+      </div>
+      <div class="payslip-row">
+        <span class="lbl">出勤天數</span>
+        <span class="val"><span id="workingDaysVal">—</span> 天</span>
+      </div>
+      <div class="payslip-row sub">
+        <span class="lbl">薪酬小計</span>
+        <span class="val" id="grossPayVal">—</span>
+      </div>
+      <div class="payslip-row deduct">
+        <span class="lbl">MPF 員工供款（5%）</span>
+        <span class="val" id="mpfEmpVal">—</span>
+      </div>
+      <div class="payslip-row net">
+        <span class="lbl">實際到手</span>
+        <span class="val" id="netPayVal">—</span>
+      </div>
+      <div class="payslip-row employer">
+        <span class="lbl">僱主 MPF 供款（5%）</span>
+        <span class="val">+HK$<span id="mpfEmployerVal">—</span></span>
+      </div>
+    </div>
+
     <label class="checkbox-row">
       <input type="checkbox" id="agreeCheck" onchange="updateState()">
-      <span>本人已核對以上本月出勤紀錄，確認資料無誤，並同意以此紀錄作為出糧依據。</span>
+      <span>本人已核對以上本月出勤紀錄及薪酬明細，確認資料無誤，並同意以此紀錄作為出糧依據。</span>
     </label>
 
     <div class="section-title">✍️ 電子簽名</div>
@@ -133,11 +178,14 @@ const SB_URL = 'https://fyxvejnvzflxppqrhlzt.supabase.co';
 const SB_KEY = 'sb_publishable_k9GEEEmqiYnuBPFqsQuvIQ_YGjweOSh';
 const SHIFT_LABEL = { morning:'早更', night:'夜更', holiday:'假日更', freelance:'散工' };
 const COLORS = ['#FF6B1A','#22C55E','#60A5FA','#A78BFA','#FB923C','#F43F5E','#06B6D4','#84CC16','#E879F9','#F0C000'];
+const DEFAULT_DAILY_RATE = 2000;
+const MPF_RATE = 0.05;
 
 let emp = null, month = '', hasSig = false, sigDataURL = null, signedAt = null;
 let canvas, ctx, drawing = false, lx, ly;
 let allEmployees = [];
 let attRows = [];
+let payroll = null; // { dailyRate, workingDays, grossPay, mpfEmployee, mpfEmployer, netPay }
 
 function init() {
   if (location.hash.slice(1).split('&')[0] === 'print') { return loadAdmin(); }
@@ -151,19 +199,39 @@ function init() {
     return;
   }
 
-  emp = allEmployees.find(e => String(e.id) === empName) || allEmployees.find(e => e.name === empName) || { name: empName, color: COLORS[0] };
+  emp = allEmployees.find(e => String(e.id) === empName) || allEmployees.find(e => e.name === empName) || { name: empName, daily_rate: DEFAULT_DAILY_RATE, color: COLORS[0] };
 
   document.getElementById('mainContent').style.display = 'block';
   document.getElementById('empName').textContent = emp.name;
   document.getElementById('monthLabel').textContent = month.slice(0,4) + '年' + parseInt(month.slice(5,7)) + '月份出糧確認';
+
   const av = document.getElementById('empAvatar');
   av.textContent = emp.name[0];
   av.style.background = emp.color + '33';
   av.style.color = emp.color;
   av.style.border = '2px solid ' + emp.color + '66';
 
+  document.getElementById('dailyRateVal').textContent = (emp.daily_rate || DEFAULT_DAILY_RATE).toLocaleString();
+
   initCanvas();
   loadAttendance();
+}
+
+function calcPayroll(workingDays) {
+  const dailyRate = emp.daily_rate || DEFAULT_DAILY_RATE;
+  const grossPay = workingDays * dailyRate;
+  const mpfEmployee = Math.round(grossPay * MPF_RATE);
+  const mpfEmployer = Math.round(grossPay * MPF_RATE);
+  const netPay = grossPay - mpfEmployee;
+
+  payroll = { dailyRate, workingDays, grossPay, mpfEmployee, mpfEmployer, netPay };
+
+  document.getElementById('workingDaysVal').textContent = workingDays;
+  document.getElementById('grossPayVal').textContent = 'HK$' + grossPay.toLocaleString();
+  document.getElementById('mpfEmpVal').textContent = '-HK$' + mpfEmployee.toLocaleString();
+  document.getElementById('netPayVal').textContent = 'HK$' + netPay.toLocaleString();
+  document.getElementById('mpfEmployerVal').textContent = mpfEmployer.toLocaleString();
+  document.getElementById('netPayNum').textContent = 'HK$' + netPay.toLocaleString();
 }
 
 async function loadAttendance() {
@@ -171,6 +239,7 @@ async function loadAttendance() {
   if (!emp.id) {
     box.innerHTML = '<div class="empty-att">找不到此員工資料，無法讀取出勤紀錄</div>';
     document.getElementById('daysNum').textContent = '0';
+    calcPayroll(0);
     return;
   }
   try {
@@ -188,6 +257,7 @@ async function loadAttendance() {
 
     if (!attRows.length) {
       box.innerHTML = '<div class="empty-att">本月尚未有出勤紀錄</div>';
+      calcPayroll(0);
       return;
     }
     box.innerHTML = attRows.map(function(r) {
@@ -197,9 +267,14 @@ async function loadAttendance() {
         '<span class="att-time">' + (r.check_in ? String(r.check_in).slice(11,16) : '') + (r.check_out ? ' - ' + String(r.check_out).slice(11,16) : '') + '</span>' +
       '</div>';
     }).join('');
+
+    // ✅ 出勤讀取完成後計算薪酬
+    calcPayroll(attRows.length);
+
   } catch (e) {
     console.error('[ATTENDANCE]', e.message);
     box.innerHTML = '<div class="empty-att">讀取失敗：' + e.message + '</div>';
+    calcPayroll(0);
   }
 }
 
@@ -247,8 +322,14 @@ async function doSubmit() {
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         employee_name: emp.name,
+        employee_id: emp.id || null,
         pay_month: month,
-        amount: 0,
+        amount: payroll.netPay,
+        daily_rate: payroll.dailyRate,
+        gross_pay: payroll.grossPay,
+        mpf_employee: payroll.mpfEmployee,
+        mpf_employer: payroll.mpfEmployer,
+        net_pay: payroll.netPay,
         days: attRows.length,
         confirmed: true,
         signature_data: sigDataURL,
@@ -263,6 +344,9 @@ async function doSubmit() {
       '<div class="sum-row"><span style="color:#555d6e">姓名</span><span style="font-weight:600">' + emp.name + '</span></div>' +
       '<div class="sum-row"><span style="color:#555d6e">月份</span><span style="font-weight:600">' + month + '</span></div>' +
       '<div class="sum-row"><span style="color:#555d6e">出勤日數</span><span style="font-weight:600">' + attRows.length + ' 日</span></div>' +
+      '<div class="sum-row"><span style="color:#555d6e">薪酬小計</span><span style="font-weight:600">HK$' + payroll.grossPay.toLocaleString() + '</span></div>' +
+      '<div class="sum-row"><span style="color:#555d6e">MPF 供款</span><span style="font-weight:600;color:#e05c5c">-HK$' + payroll.mpfEmployee.toLocaleString() + '</span></div>' +
+      '<div class="sum-row"><span style="color:#555d6e">實際到手</span><span style="font-weight:700;color:#22c55e;font-size:15px">HK$' + payroll.netPay.toLocaleString() + '</span></div>' +
       '<div class="sum-row"><span style="color:#555d6e">確認時間</span><span style="font-weight:600">' + signedAt.slice(0,10) + ' ' + signedAt.slice(11,16) + '</span></div>';
   } catch (e) {
     console.error('[SUBMIT ERROR]', e.message);
@@ -294,7 +378,7 @@ async function loadAdmin() {
       row.className = 'print-row';
       row.innerHTML =
         '<div><div style="font-weight:700;color:#e8eaf0;font-size:14px">' + r.employee_name + '　' + r.pay_month + '</div>' +
-        '<div style="font-size:11px;color:#555d6e;margin-top:3px">確認 ' + String(r.signed_at).slice(0,10) + '　出勤 ' + (r.days != null ? r.days : '-') + ' 日</div></div>';
+        '<div style="font-size:11px;color:#555d6e;margin-top:3px">確認 ' + String(r.signed_at).slice(0,10) + '　出勤 ' + (r.days != null ? r.days : '-') + ' 日　到手 HK$' + (r.net_pay != null ? Number(r.net_pay).toLocaleString() : '-') + '</div></div>';
       const actions = document.createElement('div');
       actions.style.cssText = 'display:flex;flex-shrink:0';
 
@@ -339,6 +423,8 @@ async function buildPaydayPDF(rec, btn) {
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = '產生中...';
 
+  const hasPayroll = rec.gross_pay != null;
+
   const sheet = document.createElement('div');
   sheet.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;padding:56px 64px;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"PingFang HK","Microsoft JhengHei",sans-serif;box-sizing:border-box;';
   sheet.innerHTML =
@@ -349,19 +435,40 @@ async function buildPaydayPDF(rec, btn) {
     '</div>' +
     '<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:26px">' +
       '<tr><td style="padding:8px 0;color:#666;width:120px">員工姓名</td><td style="padding:8px 0;font-weight:700;font-size:16px">' + rec.employee_name + '</td></tr>' +
+      (rec.employee_id ? '<tr><td style="padding:8px 0;color:#666">員工 ID</td><td style="padding:8px 0;font-weight:600">#' + rec.employee_id + '</td></tr>' : '') +
       '<tr><td style="padding:8px 0;color:#666">薪酬月份</td><td style="padding:8px 0;font-weight:600">' + rec.pay_month + '</td></tr>' +
-      '<tr><td style="padding:8px 0;color:#666">出勤日數</td><td style="padding:8px 0;font-weight:700;color:#b8860b">' + (rec.days != null ? rec.days : '-') + ' 日</td></tr>' +
       '<tr><td style="padding:8px 0;color:#666">確認時間</td><td style="padding:8px 0;font-weight:600">' + String(rec.signed_at).slice(0,10) + '　' + String(rec.signed_at).slice(11,16) + ' HKT</td></tr>' +
     '</table>' +
-    '<div style="font-size:13px;font-weight:600;margin-bottom:20px">本人已核對本月出勤紀錄，確認資料無誤，並同意以此紀錄作為出糧依據。</div>' +
+
+    (hasPayroll ?
+    '<div style="font-size:15px;font-weight:700;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #ddd">薪酬明細</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:26px">' +
+      '<tr><td style="padding:8px;border:1px solid #ddd">職位</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:600">電梯技工</td></tr>' +
+      '<tr><td style="padding:8px;border:1px solid #ddd">日薪</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:600">HK$' + Number(rec.daily_rate).toLocaleString() + '</td></tr>' +
+      '<tr><td style="padding:8px;border:1px solid #ddd">出勤天數</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:600">' + rec.days + ' 天</td></tr>' +
+      '<tr style="background:#fafafa"><td style="padding:8px;border:1px solid #ddd;font-weight:700">薪酬小計</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:700;color:#b8860b">HK$' + Number(rec.gross_pay).toLocaleString() + '</td></tr>' +
+      '<tr><td style="padding:8px;border:1px solid #ddd">MPF 員工供款（5%）</td><td style="padding:8px;border:1px solid #ddd;text-align:right;color:#e05c5c">-HK$' + Number(rec.mpf_employee).toLocaleString() + '</td></tr>' +
+      '<tr style="background:#f5f5f5"><td style="padding:8px;border:1px solid #ddd;font-weight:700">實際到手</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:700;color:#22c55e">HK$' + Number(rec.net_pay).toLocaleString() + '</td></tr>' +
+      '<tr><td style="padding:8px;border:1px solid #ddd;font-size:12px;color:#666">僱主 MPF 供款（5%）</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-size:12px;color:#666">+HK$' + Number(rec.mpf_employer).toLocaleString() + '</td></tr>' +
+    '</table>'
+    :
+    '<div style="font-size:13px;color:#666;margin-bottom:26px">出勤日數：<b style="color:#111">' + (rec.days != null ? rec.days : '-') + ' 日</b>（此紀錄無薪酬明細）</div>'
+    ) +
+
+    '<div style="font-size:13px;font-weight:600;margin-bottom:20px">本人已核對本月出勤紀錄' + (hasPayroll ? '及薪酬明細' : '') + '，確認資料無誤，並同意以此紀錄作為出糧依據。</div>' +
     '<div>' +
       '<div style="font-size:13px;color:#666;margin-bottom:6px">員工簽名 Employee Signature</div>' +
       '<div style="border:1px solid #bbb;height:110px;display:flex;align-items:center;justify-content:center;background:#fafafa">' +
         (rec.signature_data ? '<img src="' + rec.signature_data + '" style="max-height:100px;max-width:96%;filter:invert(1) hue-rotate(180deg) saturate(0) contrast(2)">' : '<span style="color:#bbb;font-size:12px">簽名未存檔</span>') +
       '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-top:10px">' +
+        '<span>姓名：<b style="color:#111">' + rec.employee_name + '</b></span>' +
+        (rec.employee_id ? '<span>員工 ID：<b style="color:#111">#' + rec.employee_id + '</b></span>' : '<span></span>') +
+        '<span>日期：<b style="color:#111">' + String(rec.signed_at).slice(0,10) + '</b></span>' +
+      '</div>' +
     '</div>' +
     '<div style="margin-top:30px;padding-top:14px;border-top:1px solid #ddd;text-align:center;font-size:10px;color:#888;line-height:1.8">' +
-      '本文件以電子方式簽署，具法律約束力<br>巨揚工程有限公司安全管理系統　產生時間：' + new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' }) +
+      '本文件以電子方式簽署，具法律約束力<br>巨揚工程有限公司薪酬管理系統　產生時間：' + new Date().toLocaleString('zh-HK', { timeZone: 'Asia/Hong_Kong' }) +
     '</div>';
 
   document.body.appendChild(sheet);
@@ -370,7 +477,29 @@ async function buildPaydayPDF(rec, btn) {
     const jsPDFCtor = window.jspdf.jsPDF;
     const doc = new jsPDFCtor({ orientation: 'p', unit: 'mm', format: 'a4' });
     const imgW = 210, imgH = (cv.height * imgW) / cv.width;
-    doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgW, imgH);
+
+    if (imgH <= 297) {
+      doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgW, imgH);
+    } else {
+      // 內容過長，自動分頁
+      const pxPerMm = cv.width / imgW;
+      const pageBodyPx = Math.floor(297 * pxPerMm);
+      let posY = 0;
+      let first = true;
+      while (posY < cv.height) {
+        const sliceH = Math.min(pageBodyPx, cv.height - posY);
+        const tmp = document.createElement('canvas');
+        tmp.width = cv.width; tmp.height = sliceH;
+        const tctx = tmp.getContext('2d');
+        tctx.fillStyle = '#fff'; tctx.fillRect(0,0,tmp.width,tmp.height);
+        tctx.drawImage(cv, 0, posY, cv.width, sliceH, 0, 0, cv.width, sliceH);
+        if (!first) doc.addPage();
+        doc.addImage(tmp.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, imgW, sliceH / pxPerMm);
+        posY += sliceH;
+        first = false;
+      }
+    }
+
     doc.save(rec.employee_name + '_出糧確認_' + rec.pay_month + '.pdf');
   } catch (e) {
     console.error('[PDF ERROR]', e.message);
@@ -383,11 +512,11 @@ async function buildPaydayPDF(rec, btn) {
 
 async function loadEmployees() {
   try {
-    const url = SB_URL + '/rest/v1/employees?select=id,name,phone&order=id.asc';
+    const url = SB_URL + '/rest/v1/employees?select=id,name,phone,daily_rate&order=id.asc';
     const resp = await fetch(url, { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } });
     if (resp.ok) {
       const data = await resp.json();
-      allEmployees = (data || []).map(function(e, i) { return { id: e.id, name: e.name, color: COLORS[i % COLORS.length] }; });
+      allEmployees = (data || []).map(function(e, i) { return { id: e.id, name: e.name, daily_rate: e.daily_rate || DEFAULT_DAILY_RATE, color: COLORS[i % COLORS.length] }; });
     }
   } catch (e) { console.warn('[EMPLOYEES]', e.message); }
   init();
