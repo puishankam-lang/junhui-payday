@@ -168,13 +168,18 @@ function init() {
 
 async function loadAttendance() {
   const box = document.getElementById('attList');
+  if (!emp.id) {
+    box.innerHTML = '<div class="empty-att">找不到此員工資料，無法讀取出勤紀錄</div>';
+    document.getElementById('daysNum').textContent = '0';
+    return;
+  }
   try {
     const nextMonth = (() => {
       const parts = month.split('-').map(Number);
       const y = parts[0], m = parts[1];
       return m === 12 ? (y+1) + '-01-01' : y + '-' + String(m+1).padStart(2,'0') + '-01';
     })();
-    const url = SB_URL + '/rest/v1/attendance?employee_name=eq.' + encodeURIComponent(emp.name) + '&date=gte.' + month + '-01&date=lt.' + nextMonth + '&order=date.asc';
+    const url = SB_URL + '/rest/v1/attendance?employee_id=eq.' + emp.id + '&date=gte.' + month + '-01&date=lt.' + nextMonth + '&order=date.asc';
     const resp = await fetch(url, { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     attRows = await resp.json();
@@ -188,8 +193,8 @@ async function loadAttendance() {
     box.innerHTML = attRows.map(function(r) {
       return '<div class="att-row">' +
         '<span class="att-date">' + String(r.date).slice(5) + '</span>' +
-        '<span class="att-shift">' + (SHIFT_LABEL[r.shift_type] || r.shift_type || '-') + '</span>' +
-        '<span class="att-time">' + (r.clock_in || '') + (r.clock_out ? ' - ' + r.clock_out : '') + '</span>' +
+        '<span class="att-shift">' + (r.site || r.status || '-') + '</span>' +
+        '<span class="att-time">' + (r.check_in ? String(r.check_in).slice(11,16) : '') + (r.check_out ? ' - ' + String(r.check_out).slice(11,16) : '') + '</span>' +
       '</div>';
     }).join('');
   } catch (e) {
