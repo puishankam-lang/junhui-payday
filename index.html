@@ -151,7 +151,7 @@ function init() {
     return;
   }
 
-  emp = allEmployees.find(e => e.name === empName) || { name: empName, color: COLORS[0] };
+  emp = allEmployees.find(e => String(e.id) === empName) || allEmployees.find(e => e.name === empName) || { name: empName, color: COLORS[0] };
 
   document.getElementById('mainContent').style.display = 'block';
   document.getElementById('empName').textContent = emp.name;
