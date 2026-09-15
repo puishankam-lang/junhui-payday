@@ -141,6 +141,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang HK',sans-serif;backg
       <span>本人已核對以上本月出勤紀錄及薪酬明細，確認資料無誤，並同意以此紀錄作為出糧依據。</span>
     </label>
 
+    <div class="section-title">🪪 身份證號碼</div>
+    <input type="text" id="hkidInput" oninput="updateState()" autocomplete="off"
+      placeholder="例：A123456(7)"
+      style="width:100%;background:#0d0f12;border:1px solid #2a3045;border-radius:10px;color:#e8eaf0;font-size:16px;padding:12px 14px;outline:none;margin-bottom:6px;box-sizing:border-box">
+    <div id="hkidHint" style="font-size:11px;color:#3a4255;margin-bottom:16px">系統只會儲存遮蔽版本（例：A123***(7)），完整號碼不會儲存</div>
+
     <div class="section-title">✍️ 電子簽名</div>
     <div class="sig-wrap" id="sigWrap">
       <canvas id="sigCanvas" height="140"></canvas>
@@ -278,8 +284,28 @@ async function loadAttendance() {
   }
 }
 
+function maskHKID(raw) {
+  const s = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const m = s.match(/^([A-Z]{1,2})(\d{6})([0-9A])$/);
+  if (!m) return null;
+  return m[1] + m[2].slice(0, 3) + '***(' + m[3] + ')';
+}
+
 function updateState() {
-  document.getElementById('submitBtn').disabled = !(document.getElementById('agreeCheck').checked && hasSig);
+  const raw = document.getElementById('hkidInput').value;
+  const masked = maskHKID(raw);
+  const hint = document.getElementById('hkidHint');
+  if (!raw) {
+    hint.textContent = '系統只會儲存遮蔽版本（例：A123***(7)），完整號碼不會儲存';
+    hint.style.color = '#3a4255';
+  } else if (masked) {
+    hint.textContent = '✅ 將儲存為：' + masked;
+    hint.style.color = '#22c55e';
+  } else {
+    hint.textContent = '⚠️ 格式不正確，請輸入如 A123456(7)';
+    hint.style.color = '#e05c5c';
+  }
+  document.getElementById('submitBtn').disabled = !(document.getElementById('agreeCheck').checked && hasSig && masked);
 }
 
 function initCanvas() {
@@ -323,6 +349,7 @@ async function doSubmit() {
       body: JSON.stringify({
         employee_name: emp.name,
         employee_id: emp.id || null,
+        hkid_masked: maskHKID(document.getElementById('hkidInput').value),
         pay_month: month,
         amount: payroll.netPay,
         daily_rate: payroll.dailyRate,
@@ -435,7 +462,7 @@ async function buildPaydayPDF(rec, btn) {
     '</div>' +
     '<table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:26px">' +
       '<tr><td style="padding:8px 0;color:#666;width:120px">員工姓名</td><td style="padding:8px 0;font-weight:700;font-size:16px">' + rec.employee_name + '</td></tr>' +
-      (rec.employee_id ? '<tr><td style="padding:8px 0;color:#666">員工 ID</td><td style="padding:8px 0;font-weight:600">#' + rec.employee_id + '</td></tr>' : '') +
+      '<tr><td style="padding:8px 0;color:#666">身份證號碼</td><td style="padding:8px 0;font-weight:600">' + (rec.hkid_masked || '＿＿＿＿＿＿＿＿') + '</td></tr>' +
       '<tr><td style="padding:8px 0;color:#666">薪酬月份</td><td style="padding:8px 0;font-weight:600">' + rec.pay_month + '</td></tr>' +
       '<tr><td style="padding:8px 0;color:#666">確認時間</td><td style="padding:8px 0;font-weight:600">' + String(rec.signed_at).slice(0,10) + '　' + String(rec.signed_at).slice(11,16) + ' HKT</td></tr>' +
     '</table>' +
@@ -477,7 +504,7 @@ async function buildPaydayPDF(rec, btn) {
       '</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-top:10px">' +
         '<span>姓名：<b style="color:#111">' + rec.employee_name + '</b></span>' +
-        (rec.employee_id ? '<span>員工 ID：<b style="color:#111">#' + rec.employee_id + '</b></span>' : '<span></span>') +
+        '<span>身份證：<b style="color:#111">' + (rec.hkid_masked || '＿＿＿＿') + '</b></span>' +
         '<span>日期：<b style="color:#111">' + String(rec.signed_at).slice(0,10) + '</b></span>' +
       '</div>' +
     '</div>' +
